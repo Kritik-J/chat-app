@@ -1,6 +1,6 @@
 # ChatApp
 
-This is a ChatApp clone built with React Native, Expo, Node.js, and MongoDB.
+This is a ChatApp built with React Native, Expo, Node.js, and MongoDB.
 
 ## Installation
 
