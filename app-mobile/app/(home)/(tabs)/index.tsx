@@ -22,28 +22,27 @@ export default function Chats() {
   const [loading, setLoading] = React.useState(false);
   const [chats, setChats] = React.useState<IChat[]>([]);
   const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+  const fetchChats = async () => {
+    setLoading(true);
+
+    try {
+      const response = await axios.get(`${apiUrl}/chats`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data.success) {
+        setChats(response.data.chats);
+      }
+    } catch (error) {
+      // console.log(error);
+    }
+
+    setLoading(false);
+  };
 
   React.useEffect(() => {
-    const fetchChats = async () => {
-      setLoading(true);
-
-      try {
-        const response = await axios.get(`${apiUrl}/chats`, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (response.data.success) {
-          setChats(response.data.chats);
-        }
-      } catch (error) {
-        // console.log(error);
-      }
-
-      setLoading(false);
-    };
-
     fetchChats();
   }, []);
 

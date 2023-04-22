@@ -138,6 +138,17 @@ export const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setAuth: (state, action) => {
+      state.isAuth = action.payload;
+    },
+
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
+
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
   },
 
   extraReducers: (builder) => {
@@ -192,5 +203,7 @@ export const authSlice = createSlice({
     });
   },
 });
+
+export const { clearError, setAuth, setUser, setLoading } = authSlice.actions;
 
 export default authSlice.reducer;

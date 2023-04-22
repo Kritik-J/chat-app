@@ -3,7 +3,7 @@ import { useFonts } from "expo-font";
 import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
 import React, { useEffect } from "react";
 import { Provider } from "react-redux";
-import store from "../redux/store";
+import store, { persistor } from "../redux/store";
 import { useColorScheme } from "react-native";
 import { useAppDispatch } from "../hooks/useReduce";
 import { setMode } from "../redux/uiSlice";
@@ -11,6 +11,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import "react-native-gesture-handler";
 import useAuth from "../hooks/useAuth";
 import { loadProfile } from "../redux/authSlice";
+import { PersistGate } from "redux-persist/integration/react";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -35,10 +36,12 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        {!loaded && <SplashScreen />}
-        {loaded && <RootLayoutNav />}
-      </SafeAreaProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <SafeAreaProvider>
+          {!loaded && <SplashScreen />}
+          {loaded && <RootLayoutNav />}
+        </SafeAreaProvider>
+      </PersistGate>
     </Provider>
   );
 }
@@ -48,8 +51,7 @@ function RootLayoutNav() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  // const isAuth = true;
-  const { isAuth } = useAuth();
+  const { loading, isAuth } = useAuth();
 
   React.useEffect(() => {
     if (colorScheme) {
@@ -59,19 +61,21 @@ function RootLayoutNav() {
 
   React.useEffect(() => {
     dispatch(loadProfile());
-  }, []);
+  }, [dispatch]);
 
   const segments = useSegments();
 
   const inAuthGroup = segments[0] === "(auth)";
 
   React.useEffect(() => {
-    if (!isAuth && !inAuthGroup) {
-      router.replace("(auth)");
-    } else if (isAuth && inAuthGroup) {
-      router.replace("(home)");
+    if (!loading) {
+      if (!isAuth && !inAuthGroup) {
+        router.replace("(auth)");
+      } else if (isAuth && inAuthGroup) {
+        router.replace("(home)");
+      }
     }
-  }, [isAuth, segments]);
+  }, [isAuth, loading, segments]);
 
   return (
     <Stack screenOptions={{ animation: "none" }}>
