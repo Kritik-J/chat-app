@@ -10,6 +10,7 @@ import { Link } from "expo-router";
 import Button from "../../components/Button";
 import { loginUser } from "../../redux/authSlice";
 import useAuth from "../../hooks/useAuth";
+import { TextInput } from "react-native-gesture-handler";
 
 const login = () => {
   const mode = useMode();
@@ -25,6 +26,14 @@ const login = () => {
   };
 
   const handleLogin = () => {
+    if (
+      !email ||
+      !password ||
+      email.trim().length === 0 ||
+      password.trim().length === 0
+    )
+      return;
+
     dispatch(loginUser({ email, password }));
   };
 
@@ -57,7 +66,6 @@ const login = () => {
         placeholder="Email Address"
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
         inputProps={{ autoCapitalize: "none" }}
       />
 

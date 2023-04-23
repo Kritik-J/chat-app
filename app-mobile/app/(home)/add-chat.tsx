@@ -1,4 +1,10 @@
-import { StyleSheet, View, StatusBar, FlatList } from "react-native";
+import {
+  StyleSheet,
+  View,
+  StatusBar,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 import React from "react";
 import themes from "../../constants/themes";
 import useMode from "../../hooks/useMode";
@@ -18,6 +24,8 @@ const AddChat = () => {
   const [search, setSearch] = React.useState("");
 
   const handleSearch = () => {
+    if (!search || search.trim().length === 0) return;
+
     dispatch(searchUsers({ search: search, page: 1 }));
   };
 
@@ -67,17 +75,30 @@ const AddChat = () => {
       </View>
 
       <View style={{ flex: 1 }}>
-        {users && (
-          <FlatList
-            data={users}
-            renderItem={({ item, index }) => (
-              <UserListItem
-                key={index}
-                user={item}
-                isLast={index === users.length - 1}
+        {loading ? (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <ActivityIndicator
+              size="large"
+              color={themes[mode].colors.highlight}
+            />
+          </View>
+        ) : (
+          <>
+            {users && (
+              <FlatList
+                data={users}
+                renderItem={({ item, index }) => (
+                  <UserListItem
+                    key={index}
+                    user={item}
+                    isLast={index === users.length - 1}
+                  />
+                )}
               />
             )}
-          />
+          </>
         )}
       </View>
     </View>

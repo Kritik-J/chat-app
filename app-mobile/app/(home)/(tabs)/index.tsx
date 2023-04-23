@@ -5,6 +5,7 @@ import {
   View,
   Pressable,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import useMode from "../../../hooks/useMode";
 import themes from "../../../constants/themes";
@@ -25,8 +26,12 @@ export default function Chats() {
 
   const dispatch = useAppDispatch();
 
-  React.useEffect(() => {
+  const fetchUsersChats = () => {
     dispatch(fetchChats());
+  };
+
+  React.useEffect(() => {
+    fetchUsersChats();
   }, [user]);
 
   return (
@@ -69,6 +74,12 @@ export default function Chats() {
                   isLast={index === chats.length - 1}
                 />
               )}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading}
+                  onRefresh={fetchUsersChats}
+                />
+              }
             />
           )}
         </>

@@ -200,6 +200,8 @@ export const authSlice = createSlice({
     });
     builder.addCase(loadProfile.rejected, (state) => {
       state.loading = false;
+      state.isAuth = false;
+      state.user = null;
     });
   },
 });

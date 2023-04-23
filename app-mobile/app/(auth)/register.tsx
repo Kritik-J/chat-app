@@ -26,6 +26,16 @@ const register = () => {
   };
 
   const handleRegister = () => {
+    if (
+      !displayName ||
+      !email ||
+      !password ||
+      displayName.trim().length === 0 ||
+      email.trim().length === 0 ||
+      password.trim().length === 0
+    )
+      return;
+
     dispatch(registerUser({ displayName, email, password }));
   };
 
@@ -68,7 +78,6 @@ const register = () => {
         placeholder="Email Address"
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
         inputProps={{ autoCapitalize: "none" }}
       />
 
