@@ -16,11 +16,17 @@ import Typography from "../../../components/Typography";
 import dayjs from "dayjs";
 import { useSearchParams } from "expo-router";
 import { useAppDispatch } from "../../../hooks/useReduce";
-import { getMyMessages, sendMessage } from "../../../redux/messageSlice";
+import {
+  addMessage,
+  getMyMessages,
+  sendMessage,
+} from "../../../redux/messageSlice";
 import useMessage from "../../../hooks/useMessage";
-import axios from "axios";
-import Constants from "expo-constants";
-import { IChat } from "../../../types";
+import { fetchChat } from "../../../redux/chatSlice";
+import useChat from "../../../hooks/useChat";
+import { useSocket } from "../../../context/socket";
+import useAuth from "../../../hooks/useAuth";
+import { IMessage, IUser } from "../../../types";
 
 const Chat = () => {
   const mode = useMode();
@@ -28,11 +34,24 @@ const Chat = () => {
   const { _id } = useSearchParams();
   const { loading, messages } = useMessage();
   const [text, setText] = React.useState("");
-  const [loadingChat, setLoadingChat] = React.useState(false);
-  const [chat, setChat] = React.useState<IChat | null>(null);
-  const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+  const { chat, loadingChat } = useChat();
+  const { socket, onlineUsers } = useSocket();
+  const [online, setOnline] = React.useState(false);
+  const { user } = useAuth() as { user: IUser };
+  const [arrivedMessage, setArrivedMessage] = React.useState<IMessage | null>(
+    null
+  );
 
   const handleSendMessage = () => {
+    socket.emit("sendMessage", {
+      text,
+      chatId: _id,
+      senderId: user._id,
+      senderDisplayName: user.displayName,
+      receiverId: chat?.users.find((u) => u !== user._id),
+      createdAt: new Date().toISOString(),
+    });
+
     dispatch(
       sendMessage({
         chatId: _id as string,
@@ -43,32 +62,45 @@ const Chat = () => {
   };
 
   React.useEffect(() => {
-    const fetchMessages = async () => {
-      setLoadingChat(true);
+    socket.on("getMessage", (message: IMessage) => {
+      setArrivedMessage(message);
+    });
+  }, []);
 
-      try {
-        const response = await axios.get(`${apiUrl}/chats/${_id}?page=1`, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+  React.useEffect(() => {
+    if (arrivedMessage && chat) {
+      const receiverId = chat.users.find(
+        (u) => u === arrivedMessage.sender._id
+      );
 
-        if (response.data.success) {
-          setChat(response.data.chat);
-        }
-      } catch (error) {
-        // console.log(error);
+      if (receiverId) {
+        dispatch(addMessage(arrivedMessage));
       }
+    }
+  }, [arrivedMessage, chat]);
 
-      setLoadingChat(false);
-    };
-
-    fetchMessages();
+  React.useEffect(() => {
+    dispatch(fetchChat(_id as string));
   }, [_id]);
 
   React.useEffect(() => {
     dispatch(getMyMessages({ chatId: _id as string }));
   }, [_id]);
+
+  React.useEffect(() => {
+    if (chat && chat.type === "private") {
+      const receiverId = chat.users.find((u) => u !== user._id);
+
+      if (receiverId) {
+        const receiver = onlineUsers.find(
+          (onlineUser) => onlineUser.userId === receiverId
+        );
+
+        if (receiver) setOnline(true);
+        else setOnline(false);
+      }
+    }
+  }, [chat, onlineUsers]);
 
   return (
     <View
@@ -78,8 +110,11 @@ const Chat = () => {
       ]}
     >
       <ChatHeader
-        chatName={chat ? chat.chatName : "Loading..."}
-        chatImage={chat ? chat.chatImage : "https://picsum.photos/200"}
+        chatName={!loadingChat && chat ? chat.chatName : "Loading..."}
+        chatImage={
+          !loadingChat && chat ? chat.chatImage : "https://picsum.photos/200"
+        }
+        online={!loadingChat && chat ? online : false}
       />
 
       <ImageBackground
@@ -90,40 +125,40 @@ const Chat = () => {
         }
         style={styles.image}
       >
-        <FlatList
-          contentContainerStyle={styles.list}
-          data={messages}
-          inverted
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <>
-              {!loadingChat && !loading ? (
-                <>
-                  <Message message={item} index={index} />
+        {messages && messages.length > 0 ? (
+          <FlatList
+            contentContainerStyle={styles.list}
+            data={messages}
+            inverted
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item, index }) => (
+              <>
+                <Message message={item} index={index} />
 
-                  {index === messages.length - 1 ||
-                  dayjs(messages[index + 1].createdAt).format("DD/MM/YYYY") !==
-                    dayjs(messages[index].createdAt).format("DD/MM/YYYY") ? (
-                    <View style={styles.dateHeader}>
-                      <Typography
-                        variant="body2"
-                        style={[
-                          styles.dateHeaderText,
-                          {
-                            color: themes[mode].colors.text,
-                            backgroundColor: themes[mode].colors.chatDateHeader,
-                          },
-                        ]}
-                      >
-                        {dayjs(item.createdAt).format("DD MMMM YYYY")}
-                      </Typography>
-                    </View>
-                  ) : null}
-                </>
-              ) : null}
-            </>
-          )}
-        />
+                {index === messages.length - 1 ||
+                dayjs(messages[index + 1].createdAt).format("DD/MM/YYYY") !==
+                  dayjs(messages[index].createdAt).format("DD/MM/YYYY") ? (
+                  <View style={styles.dateHeader}>
+                    <Typography
+                      variant="body2"
+                      style={[
+                        styles.dateHeaderText,
+                        {
+                          color: themes[mode].colors.text,
+                          backgroundColor: themes[mode].colors.chatDateHeader,
+                        },
+                      ]}
+                    >
+                      {dayjs(item.createdAt).format("DD MMMM YYYY")}
+                    </Typography>
+                  </View>
+                ) : null}
+              </>
+            )}
+          />
+        ) : (
+          <View style={{ flex: 1 }} />
+        )}
 
         <View style={styles.inputBox}>
           <TextInput

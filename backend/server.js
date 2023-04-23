@@ -1,6 +1,7 @@
 import app from "./src/app.js";
 import chalk from "chalk";
 import connectDB from "./src/config/connectDB.js";
+import { Server } from "socket.io";
 
 connectDB();
 
@@ -13,12 +14,82 @@ process.on("uncaughtException", (err) => {
 
 const port = process.env.PORT || 5000;
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(
-    `\nStarted Server on port ${process.env.PORT} \n${chalk.blue(
+    `\nStarted Server on port ${process.env.PORT}\n\n${chalk.blue(
       `http://localhost:${process.env.PORT}`
     )}\n`
   );
+});
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+global.users = [];
+
+const addUser = (userId, socketId) => {
+  !users.some((user) => user.userId === userId) &&
+    users.push({ userId, socketId });
+};
+
+const removeUser = (socketId) => {
+  users = users.filter((user) => user.socketId !== socketId);
+};
+
+const getUser = (userId) => {
+  return users.find((user) => user.userId === userId);
+};
+
+io.on("connection", (socket) => {
+  console.log(chalk.green("New client connected"));
+
+  // add user and socketId to users array
+
+  socket.on("addUser", (userId) => {
+    addUser(userId, socket.id);   
+    
+    io.emit("getUsers", users);
+  });
+
+  socket.on("getUserById", (userId, otherUserId) => {
+    const user = getUser(userId);
+    const otherUser = getUser(otherUserId);
+
+    if (user) {
+      io.to(user.socketId).emit("getOtherUser", otherUser);
+    }
+  });
+
+  // send and get message
+
+  socket.on("sendMessage", ({ text, chatId, senderId, senderDisplayName, receiverId }) => {
+    const user = getUser(receiverId);
+
+    if(!user) return;
+
+    io.to(user.socketId).emit("getMessage", {
+      text,
+      chat : chatId,
+      sender: {
+        _id: senderId,
+        displayName: senderDisplayName,
+      },
+      createdAt: new Date(),
+    });
+  });
+
+  // disconnect
+
+  socket.on("disconnect", () => {
+    // remove user and socketId from users array and send all users
+    removeUser(socket.id);
+
+    io.emit("getUsers", users);
+    console.log(chalk.red("Client disconnected"));
+  });
 });
 
 // Unhandled Promise Rejection

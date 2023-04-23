@@ -1,6 +1,5 @@
 import { StatusBar, StyleSheet, Text, View } from "react-native";
 import React from "react";
-import colors from "../constants/colors";
 import Avatar from "./Avatar";
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import Typography from "./Typography";
@@ -11,9 +10,11 @@ import themes from "../constants/themes";
 const ChatHeader = ({
   chatName,
   chatImage,
+  online,
 }: {
   chatName: string;
   chatImage: string;
+  online: boolean;
 }) => {
   const router = useRouter();
   const mode = useMode();
@@ -42,9 +43,17 @@ const ChatHeader = ({
           style={{ marginHorizontal: 10 }}
         />
 
-        <Typography variant="h3" style={{ color: "white" }}>
-          {chatName}
-        </Typography>
+        <View>
+          <Typography variant="h3" style={{ color: "white" }}>
+            {chatName}
+          </Typography>
+
+          {online ? (
+            <Typography variant="body1" style={{ color: "white" }}>
+              online
+            </Typography>
+          ) : null}
+        </View>
       </View>
 
       <MaterialCommunityIcons name="dots-vertical" size={24} color="white" />

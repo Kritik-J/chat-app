@@ -1,6 +1,4 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useFonts } from "expo-font";
-import { SplashScreen, Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import React, { useEffect } from "react";
 import { Provider } from "react-redux";
 import store, { persistor } from "../redux/store";
@@ -18,28 +16,12 @@ export {
   ErrorBoundary,
 } from "expo-router";
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "(tabs)",
-};
-
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
-          {!loaded && <SplashScreen />}
-          {loaded && <RootLayoutNav />}
+          <RootLayoutNav />
         </SafeAreaProvider>
       </PersistGate>
     </Provider>
@@ -50,32 +32,31 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const segments = useSegments();
 
   const { loading, isAuth } = useAuth();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (colorScheme) {
       dispatch(setMode(colorScheme));
     }
   }, [colorScheme]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(loadProfile());
-  }, [dispatch]);
+  }, []);
 
-  const segments = useSegments();
+  useEffect(() => {
+    const inAuthGroup = segments[0] === "(auth)";
 
-  const inAuthGroup = segments[0] === "(auth)";
-
-  React.useEffect(() => {
     if (!loading) {
       if (!isAuth && !inAuthGroup) {
-        router.replace("(auth)");
+        router.replace("/welcome");
       } else if (isAuth && inAuthGroup) {
-        router.replace("(home)");
+        router.replace("(tabs)");
       }
     }
-  }, [isAuth, loading, segments]);
+  }, [isAuth, segments]);
 
   return (
     <Stack screenOptions={{ animation: "none" }}>

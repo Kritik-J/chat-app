@@ -11,6 +11,7 @@ export interface IChat {
   _id: string;
   chatName: string;
   chatImage: string;
+  type: string;
   lastMessage?: {
     _id: string;
     text: string;
@@ -20,6 +21,7 @@ export interface IChat {
       displayName: string;
     };
   };
+  users: [];
   createdAt: string;
 }
 
