@@ -44,8 +44,6 @@ const getUser = (userId) => {
 };
 
 io.on("connection", (socket) => {
-  console.log(chalk.green("New client connected"));
-
   // add user and socketId to users array
 
   socket.on("addUser", (userId) => {
@@ -88,7 +86,6 @@ io.on("connection", (socket) => {
     removeUser(socket.id);
 
     io.emit("getUsers", users);
-    console.log(chalk.red("Client disconnected"));
   });
 });
 
