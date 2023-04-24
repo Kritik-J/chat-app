@@ -8,9 +8,8 @@ import FormInput from "../../components/FormInput";
 import { Octicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import Button from "../../components/Button";
-import { loginUser } from "../../redux/authSlice";
+import { clearError, loginUser } from "../../redux/authSlice";
 import useAuth from "../../hooks/useAuth";
-import { TextInput } from "react-native-gesture-handler";
 
 const login = () => {
   const mode = useMode();
@@ -36,6 +35,14 @@ const login = () => {
 
     dispatch(loginUser({ email, password }));
   };
+
+  React.useEffect(() => {
+    if (error) {
+      setTimeout(() => {
+        dispatch(clearError());
+      }, 3000);
+    }
+  }, [error]);
 
   return (
     <View
@@ -114,6 +121,19 @@ const login = () => {
         borderWidth={0}
         loading={loading}
       />
+
+      {error && (
+        <Typography
+          variant="body1"
+          style={{
+            color: themes[mode].colors.errorColor,
+            textAlign: "center",
+            marginTop: 20,
+          }}
+        >
+          {error}
+        </Typography>
+      )}
 
       <View style={{ height: 40 }} />
 

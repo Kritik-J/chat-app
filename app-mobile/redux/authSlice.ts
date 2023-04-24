@@ -9,7 +9,7 @@ type AuthState = {
   user: IUser | null;
   isAuth: boolean;
   loading: boolean;
-  error: Error | null;
+  error: string | null;
 };
 
 const initialState: AuthState = {
@@ -52,7 +52,11 @@ export const registerUser = createAsyncThunk(
 
       return data.user as IUser;
     } catch (error) {
-      return rejectWithValue(error);
+      if (!error.response) {
+        throw error;
+      }
+
+      return rejectWithValue(error.response.data);
     }
   }
 );
@@ -87,7 +91,11 @@ export const loginUser = createAsyncThunk(
 
       return data.user as IUser;
     } catch (error) {
-      return rejectWithValue(error as Error);
+      if (!error.response) {
+        throw error;
+      }
+
+      return rejectWithValue(error.response.data);
     }
   }
 );
@@ -106,7 +114,11 @@ export const logoutUser = createAsyncThunk(
 
       return data.user as IUser;
     } catch (error) {
-      return rejectWithValue(error as Error);
+      if (!error.response) {
+        throw error;
+      }
+
+      return rejectWithValue(error.response.data);
     }
   }
 );
@@ -125,7 +137,11 @@ export const loadProfile = createAsyncThunk(
 
       return data.user as IUser;
     } catch (error) {
-      return rejectWithValue(error as Error);
+      if (!error.response) {
+        throw error;
+      }
+
+      return rejectWithValue(error.response.data);
     }
   }
 );
@@ -138,6 +154,7 @@ export const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+
     setAuth: (state, action) => {
       state.isAuth = action.payload;
     },
@@ -162,7 +179,7 @@ export const authSlice = createSlice({
     });
     builder.addCase(registerUser.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.payload as Error;
+      state.error = action.payload.message as string;
     });
 
     builder.addCase(loginUser.pending, (state) => {
@@ -175,7 +192,7 @@ export const authSlice = createSlice({
     });
     builder.addCase(loginUser.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.payload as Error;
+      state.error = action.payload.message as string;
     });
 
     builder.addCase(logoutUser.pending, (state) => {

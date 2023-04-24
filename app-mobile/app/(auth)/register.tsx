@@ -8,7 +8,7 @@ import Typography from "../../components/Typography";
 import themes from "../../constants/themes";
 import { Link } from "expo-router";
 import { Octicons } from "@expo/vector-icons";
-import { registerUser } from "../../redux/authSlice";
+import { clearError, registerUser } from "../../redux/authSlice";
 import useAuth from "../../hooks/useAuth";
 
 const register = () => {
@@ -38,6 +38,14 @@ const register = () => {
 
     dispatch(registerUser({ displayName, email, password }));
   };
+
+  React.useEffect(() => {
+    if (error) {
+      setTimeout(() => {
+        dispatch(clearError());
+      }, 3000);
+    }
+  }, [error]);
 
   return (
     <View
@@ -113,6 +121,19 @@ const register = () => {
         borderWidth={0}
         loading={loading}
       />
+
+      {error && (
+        <Typography
+          variant="body1"
+          style={{
+            color: themes[mode].colors.errorColor,
+            textAlign: "center",
+            marginTop: 20,
+          }}
+        >
+          {error}
+        </Typography>
+      )}
 
       <View style={{ height: 40 }} />
 
