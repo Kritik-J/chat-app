@@ -15,6 +15,12 @@ export const createPrivateChat = catchAsync(async (req, res, next) => {
     return next(new ErrorHandler("Please provide 2 usersId", 400));
   }
 
+  const otherUser = await User.findById(userId);
+
+  if (!otherUser) {
+    return next(new ErrorHandler("User not found", 404));
+  }
+
   const chat = await Chat.findOne({
     users: { $all: usersId },
     type: "private",
