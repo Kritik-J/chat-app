@@ -34,7 +34,7 @@ function RootLayoutNav() {
   const dispatch = useAppDispatch();
   const segments = useSegments();
 
-  const { loading, isAuth } = useAuth();
+  const { isAuth } = useAuth();
 
   useEffect(() => {
     if (colorScheme) {
@@ -49,19 +49,19 @@ function RootLayoutNav() {
   useEffect(() => {
     const inAuthGroup = segments[0] === "(auth)";
 
-    if (!loading) {
-      if (!isAuth && !inAuthGroup) {
-        router.replace("/welcome");
-      } else if (isAuth && inAuthGroup) {
-        router.replace("(tabs)");
-      }
+    if (!isAuth && !inAuthGroup) {
+      router.replace("(auth)");
+    }
+
+    if (isAuth && inAuthGroup) {
+      router.replace("(home)/(tabs)");
     }
   }, [isAuth, segments]);
 
   return (
     <Stack screenOptions={{ animation: "none" }}>
-      <Stack.Screen name="(home)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(home)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: "modal" }} />
     </Stack>
   );

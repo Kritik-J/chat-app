@@ -15,26 +15,44 @@ const register = () => {
   const mode = useMode();
   const { loading, error } = useAuth();
   const dispatch = useAppDispatch();
-
-  const [displayName, setDisplayName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [form, setForm] = React.useState({
+    displayName: "",
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = React.useState({
+    displayName: "",
+    email: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = React.useState<boolean>(false);
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
+  const handleChange = (name: string, value: string) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
   const handleRegister = () => {
-    if (
-      !displayName ||
-      !email ||
-      !password ||
-      displayName.trim().length === 0 ||
-      email.trim().length === 0 ||
-      password.trim().length === 0
-    )
+    const { displayName, email, password } = form;
+
+    if (!displayName || displayName.trim().length === 0) {
+      setErrors((prev) => ({ ...prev, displayName: "Name is required" }));
       return;
+    }
+
+    if (!email || email.trim().length === 0) {
+      setErrors((prev) => ({ ...prev, email: "Email is required" }));
+      return;
+    }
+
+    if (!password || password.trim().length === 0) {
+      setErrors((prev) => ({ ...prev, password: "Password is required" }));
+      return;
+    }
 
     dispatch(registerUser({ displayName, email, password }));
   };
@@ -76,25 +94,43 @@ const register = () => {
 
       <FormInput
         placeholder="Name"
-        value={displayName}
-        onChangeText={setDisplayName}
+        value={form.displayName}
+        onChangeText={(text) => handleChange("displayName", text)}
+        status={errors.displayName ? "error" : ""}
       />
+      {errors.displayName && (
+        <Typography
+          variant="body2"
+          style={{ color: themes[mode].colors.errorColor, marginTop: 5 }}
+        >
+          {errors.displayName}
+        </Typography>
+      )}
 
       <View style={{ height: 10 }} />
 
       <FormInput
         placeholder="Email Address"
-        value={email}
-        onChangeText={setEmail}
+        value={form.email}
+        onChangeText={(text) => handleChange("email", text)}
         inputProps={{ autoCapitalize: "none" }}
+        status={errors.email ? "error" : ""}
       />
+      {errors.email && (
+        <Typography
+          variant="body2"
+          style={{ color: themes[mode].colors.errorColor, marginTop: 5 }}
+        >
+          {errors.email}
+        </Typography>
+      )}
 
       <View style={{ height: 10 }} />
 
       <FormInput
         placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
+        value={form.password}
+        onChangeText={(text) => handleChange("password", text)}
         secureTextEntry={!showPassword}
         trailingIcon={
           <Octicons
@@ -107,19 +143,30 @@ const register = () => {
             }}
           />
         }
+        status={errors.password ? "error" : ""}
       />
+      {errors.password && (
+        <Typography
+          variant="body2"
+          style={{ color: themes[mode].colors.errorColor, marginTop: 5 }}
+        >
+          {errors.password}
+        </Typography>
+      )}
 
       <View style={{ height: 20 }} />
 
       <Button
         title="Register"
         onPress={handleRegister}
-        borderRadius={30}
         backgroundColor={themes[mode].colors.highlight}
         fontColor="white"
         spinnerColor="white"
         borderWidth={0}
         loading={loading}
+        disabled={
+          errors.displayName || errors.email || errors.password ? true : false
+        }
       />
 
       {error && (

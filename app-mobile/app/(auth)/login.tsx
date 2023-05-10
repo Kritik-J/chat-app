@@ -15,23 +15,33 @@ const login = () => {
   const mode = useMode();
   const dispatch = useAppDispatch();
   const { loading, error } = useAuth();
+  const [form, setForm] = React.useState({ email: "", password: "" });
+  const [errors, setErrors] = React.useState({ email: "", password: "" });
 
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState<boolean>(false);
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
+  const handleChange = (name: string, value: string) => {
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
   const handleLogin = () => {
-    if (
-      !email ||
-      !password ||
-      email.trim().length === 0 ||
-      password.trim().length === 0
-    )
+    const { email, password } = form;
+
+    if (!email || email.trim().length === 0) {
+      setErrors((prev) => ({ ...prev, email: "Email is required" }));
       return;
+    }
+
+    if (!password || password.trim().length === 0) {
+      setErrors((prev) => ({ ...prev, password: "Password is required" }));
+      return;
+    }
 
     dispatch(loginUser({ email, password }));
   };
@@ -71,17 +81,26 @@ const login = () => {
 
       <FormInput
         placeholder="Email Address"
-        value={email}
-        onChangeText={setEmail}
+        value={form.email}
+        onChangeText={(text) => handleChange("email", text)}
         inputProps={{ autoCapitalize: "none" }}
+        status={errors.email ? "error" : ""}
       />
+      {errors.email && (
+        <Typography
+          variant="body2"
+          style={{ color: themes[mode].colors.errorColor, marginTop: 5 }}
+        >
+          {errors.email}
+        </Typography>
+      )}
 
       <View style={{ height: 10 }} />
 
       <FormInput
         placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
+        value={form.password}
+        onChangeText={(text) => handleChange("password", text)}
         secureTextEntry={!showPassword}
         trailingIcon={
           <Octicons
@@ -94,7 +113,16 @@ const login = () => {
             }}
           />
         }
+        status={errors.password ? "error" : ""}
       />
+      {errors.password && (
+        <Typography
+          variant="body2"
+          style={{ color: themes[mode].colors.errorColor, marginTop: 5 }}
+        >
+          {errors.password}
+        </Typography>
+      )}
 
       <View style={{ height: 10 }} />
 
@@ -114,12 +142,12 @@ const login = () => {
       <Button
         title="Login"
         onPress={handleLogin}
-        borderRadius={30}
         backgroundColor={themes[mode].colors.highlight}
         fontColor="white"
         spinnerColor="white"
         borderWidth={0}
         loading={loading}
+        disabled={errors.email || errors.password ? true : false}
       />
 
       {error && (

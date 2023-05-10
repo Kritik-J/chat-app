@@ -23,7 +23,7 @@ type FormInputProps = {
   secureTextEntry?: boolean;
   keyboardType?: any;
   inputProps?: any;
-  status?: "error" | "success" | "warning" | "info";
+  status?: "error" | "success" | "warning" | "info" | "";
 };
 
 const FormInput = (Props: FormInputProps) => {
@@ -33,8 +33,8 @@ const FormInput = (Props: FormInputProps) => {
     placeholder,
     leadingIcon,
     trailingIcon,
-    borderRadius = 5,
-    borderWidth = 1,
+    borderRadius = 10,
+    borderWidth = 1.2,
     borderColor = themes[mode].colors.textInputBorderColor,
     backgroundColor = "transparent",
     placeholderTextColor = "grey",

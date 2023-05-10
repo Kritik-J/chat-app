@@ -13,25 +13,38 @@ import ChatListItem from "../../../components/ChatListItem";
 import { Octicons } from "@expo/vector-icons";
 import Typography from "../../../components/Typography";
 import { useRouter } from "expo-router";
-import { useAppDispatch } from "../../../hooks/useReduce";
-import { fetchChats } from "../../../redux/chatSlice";
-import useChat from "../../../hooks/useChat";
 import useAuth from "../../../hooks/useAuth";
+import { IChat } from "../../../types";
+import axios from "axios";
+import Constants from "expo-constants";
 
 export default function Chats() {
+  const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+
   const mode = useMode();
   const router = useRouter();
-  const { chats, loading } = useChat();
   const { user } = useAuth();
+  const [loading, setLoading] = React.useState(false);
+  const [chats, setChats] = React.useState<IChat[]>([]);
 
-  const dispatch = useAppDispatch();
+  const fetchChats = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get(`${apiUrl}/chats`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-  const fetchUsersChats = () => {
-    dispatch(fetchChats());
+      setChats(data.chats);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+    }
   };
 
   React.useEffect(() => {
-    fetchUsersChats();
+    fetchChats();
   }, [user]);
 
   return (
@@ -75,10 +88,7 @@ export default function Chats() {
                 />
               )}
               refreshControl={
-                <RefreshControl
-                  refreshing={loading}
-                  onRefresh={fetchUsersChats}
-                />
+                <RefreshControl refreshing={loading} onRefresh={fetchChats} />
               }
             />
           )}

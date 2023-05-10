@@ -9,11 +9,13 @@ type AuthState = {
   user: IUser | null;
   isAuth: boolean;
   loading: boolean;
+  loadingProfile: boolean;
   error: string | null;
 };
 
 const initialState: AuthState = {
   loading: false,
+  loadingProfile: false,
   isAuth: false,
   user: null,
   error: null,
@@ -51,12 +53,8 @@ export const registerUser = createAsyncThunk(
       );
 
       return data.user as IUser;
-    } catch (error) {
-      if (!error.response) {
-        throw error;
-      }
-
-      return rejectWithValue(error.response.data);
+    } catch (error: any) {
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -90,12 +88,8 @@ export const loginUser = createAsyncThunk(
       );
 
       return data.user as IUser;
-    } catch (error) {
-      if (!error.response) {
-        throw error;
-      }
-
-      return rejectWithValue(error.response.data);
+    } catch (error: any) {
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -113,12 +107,8 @@ export const logoutUser = createAsyncThunk(
       });
 
       return data.user as IUser;
-    } catch (error) {
-      if (!error.response) {
-        throw error;
-      }
-
-      return rejectWithValue(error.response.data);
+    } catch (error: any) {
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -136,12 +126,8 @@ export const loadProfile = createAsyncThunk(
       });
 
       return data.user as IUser;
-    } catch (error) {
-      if (!error.response) {
-        throw error;
-      }
-
-      return rejectWithValue(error.response.data);
+    } catch (error: any) {
+      return rejectWithValue(error.response.data.message);
     }
   }
 );
@@ -179,7 +165,7 @@ export const authSlice = createSlice({
     });
     builder.addCase(registerUser.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.payload.message as string;
+      state.error = action.payload as string;
     });
 
     builder.addCase(loginUser.pending, (state) => {
@@ -192,7 +178,7 @@ export const authSlice = createSlice({
     });
     builder.addCase(loginUser.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.payload.message as string;
+      state.error = action.payload as string;
     });
 
     builder.addCase(logoutUser.pending, (state) => {
@@ -208,15 +194,15 @@ export const authSlice = createSlice({
     });
 
     builder.addCase(loadProfile.pending, (state) => {
-      state.loading = true;
+      state.loadingProfile = true;
     });
     builder.addCase(loadProfile.fulfilled, (state, action) => {
-      state.loading = false;
+      state.loadingProfile = false;
       state.isAuth = true;
       state.user = action.payload;
     });
     builder.addCase(loadProfile.rejected, (state) => {
-      state.loading = false;
+      state.loadingProfile = false;
       state.isAuth = false;
       state.user = null;
     });

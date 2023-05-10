@@ -1,13 +1,16 @@
 import { io } from "socket.io-client";
 import React from "react";
 import useAuth from "../hooks/useAuth";
+import Constants from "expo-constants";
 
 type IOnlineUser = {
   userId: string;
   socketId: string;
 };
 
-export const socket = io("ws://192.168.0.103:5000");
+const wsUrl = Constants.expoConfig?.extra?.wsUrl;
+
+export const socket = io(wsUrl);
 
 export const socketContext = React.createContext({
   socket,

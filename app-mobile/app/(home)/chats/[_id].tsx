@@ -16,56 +16,110 @@ import Typography from "../../../components/Typography";
 import dayjs from "dayjs";
 import { useSearchParams } from "expo-router";
 import { useAppDispatch } from "../../../hooks/useReduce";
-import {
-  addMessage,
-  getMyMessages,
-  sendMessage,
-} from "../../../redux/messageSlice";
-import useMessage from "../../../hooks/useMessage";
-import { fetchChat } from "../../../redux/chatSlice";
-import useChat from "../../../hooks/useChat";
 import { useSocket } from "../../../context/socket";
 import useAuth from "../../../hooks/useAuth";
-import { IMessage, IUser } from "../../../types";
+import { IChat, IMessage, IUser } from "../../../types";
+import axios from "axios";
+import Constants from "expo-constants";
 
 const Chat = () => {
-  const mode = useMode();
-  const dispatch = useAppDispatch();
+  const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+
   const { _id } = useSearchParams();
-  const { loading, messages } = useMessage();
+  const mode = useMode();
+  const { user } = useAuth() as { user: IUser };
+
+  const [loadingChat, setLoadingChat] = React.useState(false);
+  const [chat, setChat] = React.useState<IChat | null>(null);
+
+  const [loadingMessages, setLoadingMessages] = React.useState(false);
+  const [messages, setMessages] = React.useState<IMessage[]>([]);
+  const [sendingMessage, setSendingMessage] = React.useState(false);
+
   const [text, setText] = React.useState("");
-  const { chat, loadingChat } = useChat();
+
   const { socket, onlineUsers } = useSocket();
   const [online, setOnline] = React.useState(false);
-  const { user } = useAuth() as { user: IUser };
+
   const [arrivedMessage, setArrivedMessage] = React.useState<IMessage | null>(
     null
   );
 
-  const handleSendMessage = () => {
-    socket.emit("sendMessage", {
-      text,
-      chatId: _id,
-      senderId: user._id,
-      senderDisplayName: user.displayName,
-      receiverId: chat?.users.find((u) => u !== user._id),
-      createdAt: new Date().toISOString(),
-    });
+  // fetch chat
 
-    dispatch(
-      sendMessage({
-        chatId: _id as string,
-        text,
-      })
-    );
-    setText("");
+  const fetchChat = async (chatId: string) => {
+    try {
+      setLoadingChat(true);
+      const { data } = await axios.get(`${apiUrl}/chats/${chatId}?page=1`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      setChat(data.chat);
+      setLoadingChat(false);
+    } catch (error) {
+      setLoadingChat(false);
+    }
   };
+
+  // fetch messages
+
+  const fetchMessages = async (chatId: string) => {
+    try {
+      setLoadingMessages(true);
+      const { data } = await axios.get(`${apiUrl}/messages/chats/${chatId}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      setMessages(data.messages);
+
+      setLoadingMessages(false);
+    } catch (error) {
+      setLoadingMessages(false);
+    }
+  };
+
+  // send message
+
+  const handleSendMessage = async () => {
+    try {
+      setSendingMessage(true);
+      socket.emit("sendMessage", {
+        text,
+        chatId: _id,
+        senderId: user._id,
+        senderDisplayName: user.displayName,
+        receiverId: chat?.users.find((u) => u !== user._id),
+        createdAt: new Date().toISOString(),
+      });
+
+      const response = await axios.post(
+        `${apiUrl}/messages`,
+        { chatId: _id, text },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      setText("");
+      setMessages((prev) => [response.data.message, ...prev]);
+      setSendingMessage(false);
+      return response.data.message as IMessage;
+    } catch (error) {
+      setSendingMessage(false);
+    }
+  };
+
+  // get message
 
   React.useEffect(() => {
     socket.on("getMessage", (message: IMessage) => {
       setArrivedMessage(message);
     });
   }, []);
+
+  // add message to messages
 
   React.useEffect(() => {
     if (arrivedMessage && chat) {
@@ -74,18 +128,24 @@ const Chat = () => {
       );
 
       if (receiverId) {
-        dispatch(addMessage(arrivedMessage));
+        setMessages((prev) => [arrivedMessage, ...prev]);
       }
     }
   }, [arrivedMessage, chat]);
 
-  React.useEffect(() => {
-    dispatch(fetchChat(_id as string));
-  }, [_id]);
+  // fetch chat
 
   React.useEffect(() => {
-    dispatch(getMyMessages({ chatId: _id as string }));
+    fetchChat(_id as string);
   }, [_id]);
+
+  // fetch messages
+
+  React.useEffect(() => {
+    fetchMessages(_id as string);
+  }, [_id]);
+
+  // check if receiver is online or not
 
   React.useEffect(() => {
     if (chat && chat.type === "private") {
@@ -125,7 +185,7 @@ const Chat = () => {
         }
         style={styles.image}
       >
-        {messages && messages.length > 0 ? (
+        {!loadingChat && !loadingMessages && messages && messages.length > 0 ? (
           <FlatList
             contentContainerStyle={styles.list}
             data={messages}
