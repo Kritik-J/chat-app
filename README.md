@@ -2,6 +2,10 @@
 
 This is a ChatApp built with React Native, Expo, Node.js, and MongoDB.
 
+## Demo Video
+
+![ChatApp Demo](chatapp-demo.mp4)
+
 ## Installation
 
 Clone the repository and install the dependencies.
